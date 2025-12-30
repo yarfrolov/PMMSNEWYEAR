@@ -17,6 +17,10 @@
             overflow-x: hidden;
         }
 
+        html {
+            scroll-behavior: auto;
+        }
+
         body {
             background-color: #0a0e27;
             min-height: 100vh;
@@ -48,24 +52,78 @@
     </div>
 
     <script>
-        // Прокручиваем страницу вниз при загрузке
-        window.addEventListener('load', function() {
-            window.scrollTo(0, document.body.scrollHeight);
+        // Отключаем автоматическое восстановление позиции скролла
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+
+        function scrollToBottom() {
+            // Используем очень большое значение для гарантированной прокрутки вниз
+            const maxScroll = Math.max(
+                document.body.scrollHeight || 0,
+                document.body.offsetHeight || 0,
+                document.documentElement.scrollHeight || 0,
+                document.documentElement.offsetHeight || 0,
+                999999 // Очень большое значение на случай, если высота еще не определена
+            );
+            
+            // Прокручиваем сразу
+            window.scrollTo(0, maxScroll);
+            document.documentElement.scrollTop = maxScroll;
+            document.body.scrollTop = maxScroll;
+        }
+
+        // Прокручиваем сразу при выполнении скрипта
+        scrollToBottom();
+
+        // Используем requestAnimationFrame для более надежной прокрутки
+        requestAnimationFrame(function() {
+            scrollToBottom();
+            requestAnimationFrame(function() {
+                scrollToBottom();
+            });
         });
 
-        // Дополнительная прокрутка после полной загрузки изображения
-        const img = document.querySelector('img');
-        if (img.complete) {
-            setTimeout(function() {
-                window.scrollTo(0, document.body.scrollHeight);
-            }, 100);
-        } else {
-            img.addEventListener('load', function() {
-                setTimeout(function() {
-                    window.scrollTo(0, document.body.scrollHeight);
-                }, 100);
+        // Прокручиваем после загрузки DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                scrollToBottom();
+                requestAnimationFrame(scrollToBottom);
             });
+        } else {
+            scrollToBottom();
+            requestAnimationFrame(scrollToBottom);
         }
+
+        // Прокручиваем после полной загрузки страницы
+        window.addEventListener('load', function() {
+            scrollToBottom();
+            setTimeout(scrollToBottom, 0);
+            setTimeout(scrollToBottom, 50);
+            setTimeout(scrollToBottom, 100);
+            setTimeout(scrollToBottom, 200);
+        });
+
+        // Прокручиваем после загрузки изображения
+        const img = document.querySelector('img');
+        function handleImageLoad() {
+            scrollToBottom();
+            setTimeout(scrollToBottom, 0);
+            setTimeout(scrollToBottom, 50);
+            setTimeout(scrollToBottom, 100);
+            setTimeout(scrollToBottom, 200);
+        }
+        
+        if (img.complete) {
+            handleImageLoad();
+        } else {
+            img.addEventListener('load', handleImageLoad);
+            img.addEventListener('error', handleImageLoad);
+        }
+
+        // Финальная прокрутка через небольшую задержку
+        setTimeout(scrollToBottom, 300);
+        setTimeout(scrollToBottom, 500);
     </script>
 </body>
 </html>
